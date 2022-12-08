@@ -1,7 +1,6 @@
 # Eazel 3D 이해용 과제입니다.
 
 - Three js와 webpack을 사용하여 과제를 진행했습니다.
-- npm i 실행 후 'npm run start'로 실행 가능합니다.
+- 터미널에서 npm i 설치 후 'npm run start'로 실행 가능합니다.
 
-
-![실행결과](https://user-images.githubusercontent.com/81001516/206356920-09cd199b-babe-4f69-b6d2-bfcb6c8dc80e.gif)
+![npm run start](https://user-images.githubusercontent.com/81001516/206357342-7e73a97a-44b6-4cf0-ad07-827791021324.gif)
