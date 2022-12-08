@@ -32,7 +32,7 @@ if (WEBGL.isWebGLAvailable()) {
   // Orbitcontrols
   const controls = new OrbitControls(camera, renderer.domElement)
   controls.minDistance = 2
-  controls.maxDistance = 100
+  controls.maxDistance = 15
   controls.maxPolarAngle = Math.PI / 2
   controls.update()
 
