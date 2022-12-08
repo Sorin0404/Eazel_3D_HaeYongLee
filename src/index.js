@@ -1,173 +1,166 @@
 import * as THREE from 'three'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+
 import { WEBGL } from './webgl'
-import './modal'
 
 if (WEBGL.isWebGLAvailable()) {
-  var camera, scene, renderer
-  var plane
-  var mouse,
-    raycaster,
-    isShiftDown = false
+  // Scene
+  const scene = new THREE.Scene()
+  scene.background = new THREE.Color(0x50bcdf)
 
-  var rollOverMesh, rollOverMaterial
-  var cubeGeo, cubeMaterial
+  // 카메라
+  const camera = new THREE.PerspectiveCamera(
+    75,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    1000
+  )
+  camera.position.set(1, 3, 3)
+  camera.lookAt(new THREE.Vector3(0, 0, 0))
 
-  var objects = []
+  // 렌더러
+  const renderer = new THREE.WebGLRenderer({
+    alpha: true,
+    antialias: true,
+  })
+  renderer.setSize(window.innerWidth, window.innerHeight)
+  renderer.setPixelRatio(window.devicePixelRatio)
+  renderer.outputEncoding = THREE.sRGBEncoding
+  renderer.shadowMap.enabled = true
+  document.body.appendChild(renderer.domElement)
 
-  init()
-  render()
+  // Orbitcontrols
+  const controls = new OrbitControls(camera, renderer.domElement)
+  controls.minDistance = 2
+  controls.maxDistance = 100
+  controls.maxPolarAngle = Math.PI / 2
+  controls.update()
 
-  function init() {
-    camera = new THREE.PerspectiveCamera(
-      45,
-      window.innerWidth / window.innerHeight,
-      1,
-      10000
-    )
-    camera.position.set(500, 800, 1300)
-    camera.lookAt(0, 0, 0)
+  // 텍스처 추가
+  const textureLoader = new THREE.TextureLoader()
+  const planeTextureBaseColor = textureLoader.load(
+    '../static/img/Brick_Wall_019_basecolor.jpg'
+  )
+  const planeTextureNormalMap = textureLoader.load(
+    '../static/img/Brick_Wall_019_normal.jpg'
+  )
+  const planeTextureHeightMap = textureLoader.load(
+    '../static/img/Brick_Wall_019_height.png'
+  )
+  const planeTextureRoughnessMap = textureLoader.load(
+    '../static/img/Brick_Wall_019_roughness.jpg'
+  )
+  const sphereTextureBaseColor = textureLoader.load(
+    '../static/img/Lapis_Lazuli_002_basecolor.jpg'
+  )
+  const sphereTextureNormalMap = textureLoader.load(
+    '../static/img/Lapis_Lazuli_002_normal.jpg'
+  )
+  const sphereTextureHeightMap = textureLoader.load(
+    '../static/img/Lapis_Lazuli_002_height.png'
+  )
+  const sphereTextureRoughnessMap = textureLoader.load(
+    '../static/img/Lapis_Lazuli_002_roughness.jpg'
+  )
+  const boxTextureBaseColor = textureLoader.load(
+    '../static/img/Sci_fi_Metal_Panel_004_basecolor.jpg'
+  )
+  const boxTextureNormalMap = textureLoader.load(
+    '../static/img/Sci_fi_Metal_Panel_004_normal.jpg'
+  )
+  const boxTextureHeightMap = textureLoader.load(
+    '../static/img/Sci_fi_Metal_Panel_004_height.png'
+  )
+  const boxTextureRoughnessMap = textureLoader.load(
+    '../static/img/Sci_fi_Metal_Panel_004_roughness.jpg'
+  )
 
-    scene = new THREE.Scene()
-    scene.background = new THREE.Color(0xf0f0f0)
+  // 도형 1
+  const geometry = new THREE.SphereGeometry(0.5, 32, 32)
+  const material = new THREE.MeshStandardMaterial({
+    map: sphereTextureBaseColor,
+    normalMap: sphereTextureNormalMap,
+    displacementMap: sphereTextureHeightMap,
+    displacementScale: 0.03,
+    roughnessMap: sphereTextureRoughnessMap,
+    roughness: 0.8,
+  })
+  const obj = new THREE.Mesh(geometry, material)
+  obj.position.set(-2, 0.3, 0)
+  scene.add(obj)
+  obj.castShadow = true
 
-    var rollOverGeo = new THREE.BoxBufferGeometry(50, 50, 50)
-    rollOverMaterial = new THREE.MeshBasicMaterial({
-      color: 0xff0000,
-      opacity: 0.5,
-      transparent: true,
-    })
-    rollOverMesh = new THREE.Mesh(rollOverGeo, rollOverMaterial)
-    scene.add(rollOverMesh)
+  // 도형2
+  const geometry2 = new THREE.BoxGeometry(1, 1, 1)
+  const material2 = new THREE.MeshStandardMaterial({
+    map: boxTextureBaseColor,
+    normalMap: boxTextureNormalMap,
+    displacementMap: boxTextureHeightMap,
+    displacementScale: 0.03,
+    roughnessMap: boxTextureRoughnessMap,
+    roughness: 0.8,
+  })
+  const obj2 = new THREE.Mesh(geometry2, material2)
+  obj2.position.set(2, 0.3, 0)
+  scene.add(obj2)
+  obj2.castShadow = true
+  obj2.receiveShadow = true
 
-    cubeGeo = new THREE.BoxBufferGeometry(50, 50, 50)
-    cubeMaterial = new THREE.MeshLambertMaterial({
-      color: 0xfeb74c,
-      map: new THREE.TextureLoader().load('static/textures/square.png'),
-    })
+  // 바닥
+  const PlaneGeometry = new THREE.PlaneGeometry(20, 20, 1, 1)
+  const planeMaterial = new THREE.MeshStandardMaterial({
+    map: planeTextureBaseColor,
+    normalMap: planeTextureNormalMap,
+    displacementMap: planeTextureHeightMap,
+    displacementScale: 0.01,
+    roughnessMap: planeTextureRoughnessMap,
+    roughness: 0.8,
+  })
+  const plane = new THREE.Mesh(PlaneGeometry, planeMaterial)
+  plane.rotation.x = -0.5 * Math.PI
+  plane.position.y = -0.2
+  scene.add(plane)
+  plane.receiveShadow = true
 
-    var gridHelper = new THREE.GridHelper(1000, 20)
-    scene.add(gridHelper)
+  // 빛
+  const directionLight = new THREE.DirectionalLight(0xffffff, 0.9)
+  directionLight.position.set(-1.5, 2.5, 1)
+  const dlHelper = new THREE.DirectionalLightHelper(
+    directionLight,
+    0.2,
+    0x0000ff
+  )
+  scene.add(dlHelper)
+  scene.add(directionLight)
+  directionLight.castShadow = true
+  directionLight.shadow.mapSize.width = 2048
+  directionLight.shadow.mapSize.height = 2048
+  directionLight.shadow.radius = 8
 
-    raycaster = new THREE.Raycaster()
-    mouse = new THREE.Vector2()
+  // 애니메이션
+  function animate() {
+    const af = requestAnimationFrame(animate)
 
-    var geometry = new THREE.PlaneBufferGeometry(1000, 1000)
-    geometry.rotateX(-Math.PI / 2)
+    let xDif = obj.position.x - obj2.position.x
 
-    plane = new THREE.Mesh(
-      geometry,
-      new THREE.MeshBasicMaterial({ visible: false })
-    )
-    scene.add(plane)
-
-    objects.push(plane)
-
-    var ambientLight = new THREE.AmbientLight(0x606060)
-    scene.add(ambientLight)
-
-    var directionalLight = new THREE.DirectionalLight(0xffffff)
-    directionalLight.position.set(1, 0.75, 0.5).normalize()
-    scene.add(directionalLight)
-
-    renderer = new THREE.WebGLRenderer({ antialias: true })
-    renderer.setPixelRatio(window.devicePixelRatio)
-    renderer.setSize(window.innerWidth, window.innerHeight)
-    document.body.appendChild(renderer.domElement)
-
-    document.addEventListener('mousemove', onDocumentMouseMove, false)
-    document.addEventListener('mousedown', onDocumentMouseDown, false)
-    document.addEventListener('keydown', onDocumentKeyDown, false)
-    document.addEventListener('keyup', onDocumentKeyUp, false)
-    window.addEventListener('resize', onWindowResize, false)
+    if (xDif < 1.1 && xDif > -1.1) {
+      obj.position.x = 0.95
+    } else {
+      obj.position.x += 0.03
+      obj.rotation.z -= 0.07
+    }
+    controls.update()
+    renderer.render(scene, camera)
   }
+  animate()
 
+  // 반응형
   function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight
     camera.updateProjectionMatrix()
-
     renderer.setSize(window.innerWidth, window.innerHeight)
   }
-
-  function onDocumentMouseMove(event) {
-    event.preventDefault()
-
-    mouse.set(
-      (event.clientX / window.innerWidth) * 2 - 1,
-      -(event.clientY / window.innerHeight) * 2 + 1
-    )
-
-    raycaster.setFromCamera(mouse, camera)
-
-    var intersects = raycaster.intersectObjects(objects)
-
-    if (intersects.length > 0) {
-      var intersect = intersects[0]
-
-      rollOverMesh.position.copy(intersect.point).add(intersect.face.normal)
-      rollOverMesh.position
-        .divideScalar(50)
-        .floor()
-        .multiplyScalar(50)
-        .addScalar(25)
-    }
-
-    render()
-  }
-
-  function onDocumentMouseDown(event) {
-    event.preventDefault()
-
-    mouse.set(
-      (event.clientX / window.innerWidth) * 2 - 1,
-      -(event.clientY / window.innerHeight) * 2 + 1
-    )
-
-    raycaster.setFromCamera(mouse, camera)
-
-    var intersects = raycaster.intersectObjects(objects)
-
-    if (intersects.length > 0) {
-      var intersect = intersects[0]
-
-      if (isShiftDown) {
-        if (intersect.object !== plane) {
-          scene.remove(intersect.object)
-
-          objects.splice(objects.indexOf(intersect.object), 1)
-        }
-
-      } else {
-        var voxel = new THREE.Mesh(cubeGeo, cubeMaterial)
-        voxel.position.copy(intersect.point).add(intersect.face.normal)
-        voxel.position.divideScalar(50).floor().multiplyScalar(50).addScalar(25)
-        scene.add(voxel)
-
-        objects.push(voxel)
-      }
-
-      render()
-    }
-  }
-
-  function onDocumentKeyDown(event) {
-    switch (event.keyCode) {
-      case 16:
-        isShiftDown = true
-        break
-    }
-  }
-
-  function onDocumentKeyUp(event) {
-    switch (event.keyCode) {
-      case 16:
-        isShiftDown = false
-        break
-    }
-  }
-
-  function render() {
-    renderer.render(scene, camera)
-  }
+  window.addEventListener('resize', onWindowResize)
 } else {
   var warning = WEBGL.getWebGLErrorMessage()
   document.body.appendChild(warning)
